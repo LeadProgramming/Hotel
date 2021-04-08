@@ -1,11 +1,12 @@
-import Header from "../components/header"
-import fireApp from "../firebase_config";
+import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import Combobox from "../components/combobox";
+import fireApp from "../firebase_config";
 const Rooms = ({ listings }) => {
+    const router = useRouter();
     const rsrvInfo = useSelector(state => state.reservation);
-    listings.forEach((i, j) => { i["totalCharge"] = rsrvInfo.days * i.dailyRate });
-    const reserve = ({ dailyRate, totalCharge, roomNumber, roomStatus, roomType }) => {
+    listings.forEach((i) => { i["totalCharge"] = rsrvInfo.days * i.dailyRate });
+
+    const reserving = ({ dailyRate, totalCharge, roomNumber, roomType }) => {
         fireApp.firestore().collection('reservation').add({
             firstName: rsrvInfo.firstName,
             lastName: rsrvInfo.lastName,
@@ -13,53 +14,88 @@ const Rooms = ({ listings }) => {
             checkInDate: rsrvInfo.checkInDate,
             checkOutDate: rsrvInfo.checkOutDate,
             roomType: roomType,
-            roomStatus: roomStatus,
+            roomStatus: "occupied",
             roomNumber: roomNumber,
             dailyRate: dailyRate,
             totalCharge: totalCharge
         });
+        fireApp.firestore().collection('room').doc(roomNumber).update({
+            roomStatus: "occupied",
+            checkInDate: rsrvInfo.checkInDate,
+            checkOutDate: rsrvInfo.checkOutDate
+        });
+        router.push("/rooms")
     }
+
     return (
-        <div >
-            <Header>
-                <main>
-                    <h1>
-                        Rooms
-                    </h1>
-                    {listings?.map((i, j) => {
+        <div className={"space-y-4"}>
+            <h1 className="pt-8 pl-8 ">
+                Rooms
+            </h1>
+            <table className={"table-auto"}>
+                <thead>
+                    <tr>
+                        <th className={"px-8 "}>Room #</th>
+                        <th className={"px-8 "}>Room Type</th>
+                        <th className={"px-8 "}>Room Status</th>
+                        <th className={"px-8 "}>Daily Rate</th>
+                        <th className={"px-8 "}>Total Charge</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {listings?.length > 0 ? listings.map((i, j) => {
                         return (
-                            <div key={JSON.stringify(i)}>
-                                <div>
-                                    <span>
-                                        Room #: {i.roomNumber}
-                                    </span>
-                                    <span>
-                                        Type: {i.roomType}
-                                    </span>
-                                    <Combobox options={["available", "occupied", "dirty", "maintenance"]} />
+                            <tr key={JSON.stringify(i)}>
+                                <td className={"px-8 py-4"}>
+                                    {i.roomNumber}
+                                </td>
+                                <td className={"px-8 py-4"}>
+                                    {i.roomType}
+                                </td>
 
+                                <td className={"px-8 py-4"}>
                                     {
-                                        i.dailyRate && rsrvInfo.firstName &&
-                                        <>
-                                            <span>
-                                                Daily Rate: {i.dailyRate}
-                                            </span>
-                                            <span>
-                                                Total Charge: {i.totalCharge}
-                                            </span>
-                                            <button onClick={reserve.call(null, i, totalCharge[j])}>Reserve</button>
-                                        </>
+                                        !rsrvInfo.firstName.length ? (
+                                            <>
+                                                <select role="none">
+                                                    <option value={i.roomStatus}>{i.roomStatus}</option>
+                                                    {["available", "occupied", "dirty", "maintenance"].map(i => {
+                                                        return (
+                                                            <option value={i} >{i}</option>
+                                                        )
+                                                    })}
+                                                </select>
+                                            </>) : i.roomStatus
                                     }
+                                </td>
 
-                                </div>
 
-                            </div>
+                                {
+                                    i.dailyRate && rsrvInfo.firstName &&
+                                    <>
+                                        <td className={"px-8 py-4"}>
+                                            {i.dailyRate}
+                                        </td>
+                                        <td className={"px-8 py-4"}>
+                                            {i.totalCharge}
+                                        </td>
+                                        <td className={"px-8 py-4"}>
+                                            <button onClick={() => {
+                                                reserving(i);
+                                            }}>Reserve</button>
+                                        </td>
+                                    </>
+                                }
+
+
+                            </tr>
                         )
-                    })}
+                    }) : "No rooms available"}
+                </tbody>
+            </table>
 
-                </main>
-            </Header>
-        </div >
+
+        </div>
     )
 }
 export async function getServerSideProps({ query }) {

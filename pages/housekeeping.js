@@ -1,71 +1,90 @@
-import Header from "../components/header"
 import fireApp from "../firebase_config";
 
-const Housekeeping = ({ dirty, days }) => {
+const Housekeeping = ({ dirty }) => {
 
     return (
-        <div >
-            <Header>
-                <main>
-                    <h1>
-                        Housekeeping
-                    </h1>
-                    {dirty?.map((i, j) => {
-                        return (
-                            <div key={JSON.stringify(i)}>
-                                <div>
-                                    <span>
-                                        Housekeeper: {i.housekeeper}
-                                    </span>
-                                    <span>
-                                        Room #: {i.roomNumber}
-                                    </span>
-                                    <span>
-                                        Type: {i.roomType}
-                                    </span>
-                                    <span>
-                                        Status: {i.roomStatus}
-                                    </span>
-                                    <span>
-                                        Bathroom Towels: {i.towels}
-                                    </span>
-                                    <span>
-                                        Bed Sheets: {i.bedSheets ? "Cleaned" : "Dirty"}
-                                    </span>
-                                    <span>
-                                        Vacuum: {i.vacuum ? "Cleaned" : "Dirty"}
-                                    </span>
-                                    <span>
-                                        Dusting: {i.dusting ? "Cleaned" : "Dirty"}
-                                    </span>
-                                    <span>
-                                        Electronics: {i.electronics.map(j => {
-                                        return (
-                                            <div>
-                                                {j}
-                                            </div>
-                                        )
-                                    })}
-                                    </span>
-                                </div>
-                            </div>
-                        )
-                    })}
-
-                </main>
-
-                <footer>
-                    {/* <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a> */}
-                </footer>
-            </Header>
-        </div >
+        <div className={"space-y-4"}>
+            <h1 className={"pt-8 pl-8 "}>
+                Housekeeping
+             </h1>
+            <table className="table-auto">
+                <thead>
+                    <tr>
+                        <th className={"px-8 "}>
+                            Housekeeper
+                        </th>
+                        <th className={"px-8 "}>
+                            Room #
+                        </th>
+                        <th className={"px-8 "}>
+                            Room Type
+                        </th>
+                        <th className={"px-8 "}>
+                            Room Status
+                        </th>
+                        <th className={"px-8 "}>
+                            Bathroom Towels
+                        </th>
+                        <th className={"px-8 "}>
+                            Bed Sheets
+                        </th>
+                        <th className={"px-8 "}>
+                            Vacuum
+                        </th>
+                        <th className={"px-8 "}>
+                            Dusting
+                        </th>
+                        <th className={"px-8 "}>
+                            Electronics
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {dirty.length > 0 ?
+                        dirty.map((i, j) => {
+                            return (
+                                <tr key={JSON.stringify(i)}>
+                                    <td className={"px-8 py-4"}>
+                                        {i.housekeeper}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {i.roomNumber}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {i.roomType}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {i.roomStatus}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {!i.towels ? "Cleaned" : "Dirty"}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {!i.bedSheets ? "Cleaned" : "Dirty"}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {!i.vacuum ? "Cleaned" : "Dirty"}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        {!i.dusting ? "Cleaned" : "Dirty"}
+                                    </td>
+                                    <td className={"px-8 py-4"}>
+                                        <ul className={"space-y-2"}>
+                                            {i.electronics.map(j => {
+                                                return (
+                                                    <li>
+                                                        {j}
+                                                    </li>
+                                                )
+                                            })}
+                                        </ul>
+                                    </td>
+                                </tr>
+                            )
+                        }) : <p>There are no rooms to clean.</p>}
+                </tbody>
+            </table>
+        </div>
     )
 }
 export async function getServerSideProps({ query }) {

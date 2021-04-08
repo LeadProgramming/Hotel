@@ -12,7 +12,12 @@ const reservationSlice = createSlice({
     initialState,
     reducers: {
         reserve(state, action) {
-            state = action.payload;
+            state.firstName = action.payload.firstName;
+            state.lastName = action.payload.lastName;
+            state.checkInDate = Date.parse(action.payload.checkInDate);
+            state.checkOutDate = Date.parse(action.payload.checkOutDate);
+            state.roomType = action.payload.roomType;
+            state.days = action.payload.days;
         }
     }
 })

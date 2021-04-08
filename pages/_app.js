@@ -1,10 +1,18 @@
-import 'tailwindcss/tailwind.css'
-import { Provider } from 'react-redux'
-import store from "../store/store"
+import { Provider } from 'react-redux';
+import 'tailwindcss/tailwind.css';
+import Header from "../components/header";
+import store from "../store/store";
+
 function MyApp({ Component, pageProps }) {
   return (
     <Provider store={store}>
-      < Component {...pageProps} />
+      <div className="flex">
+        <Header>
+          <main className="w-full">
+            < Component {...pageProps} />
+          </main>
+        </Header>
+      </div>
     </Provider>
   )
 }

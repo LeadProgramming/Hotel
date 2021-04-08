@@ -1,0 +1,1 @@
+{"ast":null,"code":"import { configureStore } from \"@reduxjs/toolkit\";\nimport reservationReducer from \"./reservationSlice\";\nconst reducer = {\n  reservation: reservationReducer\n};\nconst store = configureStore({\n  reducer: reducer\n});\nexport default store;","map":null,"metadata":{},"sourceType":"module"}

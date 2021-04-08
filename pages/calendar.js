@@ -1,35 +1,50 @@
-import Header from "../components/header"
+import dayjs from "dayjs";
 import fireApp from "../firebase_config";
-
 const Calendar = ({ rooms }) => {
+    const month = dayjs().month() + 1;
+    const day = dayjs().date();
     return (
-        <div >
-            <Header>
-                <main>
-                    <h1>
-                        Calendar
-                    </h1>
-                    {rooms?.map((i, j) => {
-                        return (
-                            <div key={JSON.stringify(i)}>
-                                {}
-                            </div>
-                        )
-                    })}
+        <div className={"space-y-4"}>
+            <h1 className={"pt-8 pl-8 "}>
+                Calendar
+            </h1>
+            <table className="table-auto">
+                <thead>
+                    <tr>
+                        <th className={"px-8"}>Room #</th>
+                        {
+                            [
+                                { month, day },
+                                { month, day: day + 1 },
+                                { month, day: day + 2 },
+                                { month, day: day + 3 },
+                                { month, day: day + 4 },
+                                { month, day: day + 5 },
+                                { month, day: day + 6 },
+                            ].map(i => {
+                                return (
+                                    <th className={"px-8"}>{i.month}/{i.day}</th>
+                                )
+                            })
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        rooms.length > 0 ? rooms?.map((i, j) => {
+                            return (
+                                <tr key={JSON.stringify(i)}>
+                                    <td className={"px-8 py-4"}>{i.roomNumber}</td>
+                                    {[false, false, false, false, false, false, false].map((i) => {
 
-                </main>
-
-                <footer>
-                    {/* <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a> */}
-                </footer>
-            </Header>
+                                        return (!i ? <td className={"px-8 py-4"}>David</td> : <td className={"px-8 py-4"}></td>)
+                                    })}
+                                </tr>
+                            )
+                        }) : <tr>There are no rooms.</tr>
+                    }
+                </tbody>
+            </table>
         </div >
     )
 }
@@ -37,6 +52,7 @@ export async function getServerSideProps({ query }) {
     let rooms = [];
     await fireApp.firestore()
         .collection("room")
+        .orderBy("roomNumber")
         .get()
         .then(queryData => {
             queryData.forEach(i => {

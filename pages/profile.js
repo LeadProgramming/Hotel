@@ -1,79 +1,62 @@
 import 'firebase/storage';
-import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from 'react';
 import fireApp from "../firebase_config";
 
-const Profile = ({ guests }) => {
-  const picsRef = guests?.map(i => useRef());
+const Profile = () => {
+  const picRef = useRef();
+  const [guest, setGuest] = useState({});
+  const editPicture = (e) => {
+    const file = e.target.files[0];
+    const storageRef = fireApp.storage().ref();
+    const uploadTask = storageRef.child(`images/${file.name}`)
+    uploadTask.put(file);
+    fireApp.auth().onAuthStateChanged(async function (user) {
+      if (user) {
+        await fireApp.firestore().collection('guest').doc(user.email).update({
+          imgName: file.name,
+        });
+      }
+    });
+  }
+
   useEffect(async () => {
-    if (guests) {
-      let imgFiles = [];
-      imgFiles = guests.map(i => fireApp.storage().refFromURL(`gs://hotel-3c249.appspot.com/images/${i.imgName}`));
-      imgFiles.map((i, j) => {
-        i.getDownloadURL().then((url) => {
-          i["profilePic"] = url;
-        }).then(() => {
-          picsRef[j].current.src = i.profilePic;
-        })
-      })
-    }
-  }, []);
+    fireApp.auth().onAuthStateChanged(async function (user) {
+      if (user) {
+        await fireApp.firestore()
+          .collection("guest")
+          .doc(user.email)
+          .get()
+          .then((doc) => {
+            if (doc.exists) {
+              setGuest(doc.data());
+              fireApp.storage()
+                .refFromURL(`gs://hotel-3c249.appspot.com/images/${doc.data().imgName}`)
+                .getDownloadURL()
+                .then((url) => {
+                  picRef.current.src = url
+                })
+            }
+          })
+      }
+    });
+  }, [])
+
   return (
     <div className={"space-y-4 "}>
       <h1 className="pt-8 pl-8">
         Profile
       </h1>
-      {guests ?
-        <table className={"table-auto"}>
-          <thead>
-            <tr>
-              <th className={"px-8 "}>Profile Pic</th>
-              <th className={"px-8 "}>First Name</th>
-              <th className={"px-8 "}>Last Name</th>
-              <th className={"px-8 "}>Phone</th>
-              <th className={"px-8 "}>Address</th>
-              <th className={"px-8 "}>Email</th>
-              <th className={"px-8 "}>Driver ID#</th>
-              <th className={"px-8 "}>Vehicle ID#</th>
-            </tr>
-          </thead>
-          <tbody>
-            {guests?.map((i, j) => {
-              return (
-                <tr key={JSON.stringify(i)}>
-                  <td className={"px-8 py-4"}><img ref={picsRef[j]} alt="guest's image" width="100" height="100" /></td>
-                  <td className={"px-8 py-4"}>{i.firstName}</td>
-                  <td className={"px-8 py-4"}>{i.lastName}</td>
-                  <td className={"px-8 py-4"}>{i.phone}</td>
-                  <td className={"px-8 py-4"}>{i.address}</td>
-                  <td className={"px-8 py-4"}>{i.email}</td>
-                  <td className={"px-8 py-4"}>{i.driverId}</td>
-                  <td className={"px-8 py-4"}>{i.carId}</td>
-                  <td className={"px-8 py-4"}><Link href={"/profile/" + i.email}><a>View</a></Link></td>
-                </tr>
-              )
-            })}
+      <img ref={picRef} alt={"profile pic"} width={300} height={300} />
+      <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" accept="image/*" type="file" onChange={editPicture} />
 
-          </tbody>
-        </table> : !email && <p>No user has signed up yet.</p>}
+
+      <p>Name: {guest.firstName} {guest.lastName}</p>
+      <p>Email: {guest.email}</p>
+      <p>Phone: {guest.phone}</p>
+      <p>Address: {guest.address}</p>
+      <p>Driver #: {guest.driverId}</p>
+      <p>Vehicle #: {guest.carId}</p>
     </div>
   )
 }
 export default Profile;
-
-export async function getServerSideProps({ query }) {
-  let guests = []
-  await fireApp.firestore()
-    .collection("guest")
-    .get()
-    .then(queryData => {
-      queryData.forEach(i => {
-        guests.push(i.data());
-      })
-    });
-  return {
-    props: { guests }
-  }
-}
-
-

@@ -1,72 +1,54 @@
 import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import NewReservation from "../components/newReservation";
 import fireApp from "../firebase_config";
-import { reserve } from "../store/reservationSlice";
+import { removeReservation, setAddMode, setRemoveMode } from "../store/reservationSlice";
 
 const Reservation = ({ reservations }) => {
   const router = useRouter();
-  const { register, handleSubmit, watch, errors } = useForm();
-  // const watchFields = watch(["checkInDate", "checkOutDate"]);
   const dispatch = useDispatch();
-  const onSubmit = data => {
-    const days = Math.floor((Date.parse(data.checkOutDate) - Date.parse(data.checkInDate)) / 8.64e+7);
-    data["days"] = days;
-    dispatch(reserve(data));
-    router.push(`/rooms?type=${data.roomType}`);
-  };
+  const reservationStore = useSelector(state => state.reservation);
+  useEffect(() => {
+    fireApp.auth().onAuthStateChanged((user) => {
+      if (!user)
+        router.push("/login");
+    })
+  }, []);
+  const promptAddReservation = () => {
+    dispatch(setAddMode());
+  }
+  const promptRemoveReservationBtn = () => {
+    dispatch(setRemoveMode());
+  }
+  const promptRemoveReservation = (payload) => {
+    dispatch(removeReservation(payload));
+  }
   return (
     <div className="space-y-4">
       <h1 className="pt-8 text-center font-bold text-gray-700 text-xl">
         Reservation
       </h1>
-      <form onSubmit={handleSubmit(onSubmit)} className={"space-y-2 w-1/2 m-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"}>
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="firstName">
-          First Name:
-        </label>
-        <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="firstName" ref={register} />
+      <div className={"flex justify-end space-x-2 mr-8"}>
+        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onClick={promptAddReservation}>Add</button>
+        <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onClick={promptRemoveReservationBtn}>Remove</button>
+      </div>
+      {reservationStore.addMode && <NewReservation />}
 
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="firstName" htmlFor="lastName">
-          Last Name:
-        </label>
-        <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="lastName" ref={register} />
-
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="checkInDate">
-          Check-in Date:
-        </label>
-        <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="checkInDate" type="date" ref={register({ required: true, valueAsDate: true })} />
-
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="checkOutDate">
-          Check-Out Date:
-        </label>
-        <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="checkOutDate" type="date" ref={register({ required: true, valueAsDate: true })} />
-
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="roomType">
-          Room Type:
-        </label>
-        <select className="block shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="roomType" ref={register}>
-          <option value="K">King</option>
-          <option value="DQ">Double Queen</option>
-          <option value="DQK">Double Queen with Kitchen</option>
-          <option value="S">Suite</option>
-        </select>
-
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">Proceed</button>
-      </form>
-      <div className={"mt-8 text-center font-bold text-gray-700 text-xl "}>All Reservations</div>
+      <div className={"mt-8 text-center font-bold text-gray-700 text-xl "}>User's Reservations</div>
       <table className={"table-auto mx-8"}>
         <thead>
           <tr>
-            <th className={"px-8"}>First Name </th>
-            <th className={"px-8"}>Last Name</th>
-            <th className={"px-8"}>Initial Date</th>
-            <th className={"px-8"}>Check-In</th>
-            <th className={"px-8"}>Check-Out</th>
-            <th className={"px-8"}>Room Type</th>
-            <th className={"px-8"}>Room Status</th>
-            <th className={"px-8"}>Room #</th>
-            <th className={"px-8"}>Daily Rate</th>
-            <th className={"px-8"}>Total Charge</th>
+            <th className={"px-4"}>First Name </th>
+            <th className={"px-4"}>Last Name</th>
+            <th className={"px-4"}>Initial Date</th>
+            <th className={"px-4"}>Check-In</th>
+            <th className={"px-4"}>Check-Out</th>
+            <th className={"px-4"}>Room Type</th>
+            <th className={"px-4"}>Room Status</th>
+            <th className={"px-4"}>Room #</th>
+            <th className={"px-4"}>Daily Rate</th>
+            <th className={"px-4"}>Total Charge</th>
           </tr>
         </thead>
         <tbody >
@@ -82,8 +64,10 @@ const Reservation = ({ reservations }) => {
                   <td className={"px-8 py-4"}>{i.roomType}</td>
                   <td className={"px-8 py-4"}>{i.roomStatus}</td>
                   <td className={"px-8 py-4"}>{i.roomNumber}</td>
-                  <td className={"px-8 py-4"}>{i.dailyRate}</td>
-                  <td className={"px-8 py-4"}>{i.totalCharge}</td>
+                  <td className={"px-8 py-4"}>${i.dailyRate}</td>
+                  <td className={"px-8 py-4"}>${i.totalCharge}</td>
+                  <td className={"px-8 py-4"}>{reservationStore.removeMode &&
+                    <button className="bg-red-500 hover:bg-red-700 text-white font-bold px-4 rounded focus:outline-none focus:shadow-outline" onClick={() => promptRemoveReservation(i)}>-</button>}</td>
                 </tr>
               )
             }) : <tr>No rooms to display</tr>
@@ -93,6 +77,7 @@ const Reservation = ({ reservations }) => {
     </div >
   )
 }
+
 export async function getServerSideProps({ query }) {
   let reservations = [];
   await fireApp.firestore()

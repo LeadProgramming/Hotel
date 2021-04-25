@@ -1,32 +1,28 @@
 import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import fireApp from "../firebase_config";
+import { checkingIn, setAvailable } from "../store/roomsSlice";
+
 const Rooms = ({ listings }) => {
     const router = useRouter();
-    const rsrvInfo = useSelector(state => state.reservation);
-    listings.forEach((i) => { i["totalCharge"] = rsrvInfo.days * i.dailyRate });
+    const dispatch = useDispatch();
 
-    const reserving = ({ dailyRate, totalCharge, roomNumber, roomType }) => {
-        fireApp.firestore().collection('reservation').add({
-            firstName: rsrvInfo.firstName,
-            lastName: rsrvInfo.lastName,
-            reservedDate: Date.now(),
-            checkInDate: rsrvInfo.checkInDate,
-            checkOutDate: rsrvInfo.checkOutDate,
-            roomType: roomType,
-            roomStatus: "occupied",
-            roomNumber: roomNumber,
-            dailyRate: dailyRate,
-            totalCharge: totalCharge
-        });
-        fireApp.firestore().collection('room').doc(roomNumber).update({
-            roomStatus: "occupied",
-            checkInDate: rsrvInfo.checkInDate,
-            checkOutDate: rsrvInfo.checkOutDate
-        });
-        router.push("/rooms")
+    const promptCheckinPage = (payload) => {
+        fireApp.auth().onAuthStateChanged((user) => {
+            if (user) {
+                dispatch(checkingIn(payload));
+                router.push("/checkin");
+            }
+            else {
+                router.push("/login");
+            }
+        })
     }
-
+    const promptSetAvailable = (payload) => {
+        console.log(payload);
+        dispatch(setAvailable(payload));
+        router.push("/rooms");
+    }
     return (
         <div className={"space-y-4"}>
             <h1 className="pt-8 pl-8 ">
@@ -39,7 +35,6 @@ const Rooms = ({ listings }) => {
                         <th className={"px-8 "}>Room Type</th>
                         <th className={"px-8 "}>Room Status</th>
                         <th className={"px-8 "}>Daily Rate</th>
-                        <th className={"px-8 "}>Total Charge</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,75 +49,57 @@ const Rooms = ({ listings }) => {
                                 </td>
 
                                 <td className={"px-8 py-4"}>
+                                    {i.roomStatus}
+                                </td>
+                                <td className={"px-8 py-4"}>
+                                    $ {i.dailyRate}
+                                </td>
+                                <td className={"px-8 py-4"}>
                                     {
-                                        !rsrvInfo.firstName.length ? (
-                                            <>
-                                                <select role="none">
-                                                    <option value={i.roomStatus}>{i.roomStatus}</option>
-                                                    {["available", "occupied", "dirty", "maintenance"].map(i => {
-                                                        return (
-                                                            <option value={i} >{i}</option>
-                                                        )
-                                                    })}
-                                                </select>
-                                            </>) : i.roomStatus
+                                        i.roomStatus === "available" &&
+                                        <button className={"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"} disabled={i.roomStatus !== "available"} onClick={() => promptCheckinPage(i)}>
+                                            Check-in
+                                        </button>
                                     }
                                 </td>
-
-
-                                {
-                                    i.dailyRate && rsrvInfo.firstName &&
-                                    <>
-                                        <td className={"px-8 py-4"}>
-                                            {i.dailyRate}
-                                        </td>
-                                        <td className={"px-8 py-4"}>
-                                            {i.totalCharge}
-                                        </td>
-                                        <td className={"px-8 py-4"}>
-                                            <button onClick={() => {
-                                                reserving(i);
-                                            }}>Reserve</button>
-                                        </td>
-                                    </>
-                                }
-
-
+                                <td className={"px-8 py-4"}>
+                                    {
+                                        (i.roomStatus == "dirty" || i.roomStatus == "maintenance") && (
+                                            <button className={"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"} onClick={() => promptSetAvailable(i)}>Available</button>
+                                        )
+                                    }
+                                </td>
                             </tr>
                         )
-                    }) : "No rooms available"}
+                    }) : <p>"No rooms available"</p>}
                 </tbody>
             </table>
-
-
-        </div>
+        </div >
     )
 }
-export async function getServerSideProps({ query }) {
+export async function getServerSideProps() {
     let listings = [];
-    if (query.type) {
-        await fireApp.firestore()
-            .collection("room")
-            .where("roomType", "==", query.type)
-            .where("roomStatus", "==", "available")
-            .get()
-            .then(queryData => {
-                queryData.forEach(i => {
-                    listings.push(i.data());
-                })
+    // if (query.type) {
+    //     await fireApp.firestore()
+    //         .collection("room")
+    //         .where("roomType", "==", query.type)
+    //         .where("roomStatus", "==", "available")
+    //         .get()
+    //         .then(queryData => {
+    //             queryData.forEach(i => {
+    //                 listings.push(i.data());
+    //             })
+    //         })
+    // }
+    await fireApp.firestore()
+        .collection("room")
+        .orderBy("roomNumber")
+        .get()
+        .then(queryData => {
+            queryData.forEach(i => {
+                listings.push(i.data());
             })
-    }
-    else {
-        await fireApp.firestore()
-            .collection("room")
-            .orderBy("roomNumber")
-            .get()
-            .then(queryData => {
-                queryData.forEach(i => {
-                    listings.push(i.data());
-                })
-            })
-    }
+        })
     return {
         props: { listings },
     }

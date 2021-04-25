@@ -1,13 +1,13 @@
 import firebase from 'firebase';
 
 export const firebaseConfig = {
-    apiKey: "AIzaSyARob1Ja2jTzCVLT9QF6eBOakuXWCVL1e8",
-    authDomain: "hotel-3c249.firebaseapp.com",
-    projectId: "hotel-3c249",
-    storageBucket: "hotel-3c249.appspot.com",
-    messagingSenderId: "745011087359",
-    appId: "1:745011087359:web:714fff5e51447cc5c489ca",
-    measurementId: "G-5XYXP89Z22"
+    apiKey: process.env.FIREBASE_API_KEY,
+    authDomain: process.env.AUTH_DOMAIN,
+    projectId: process.env.PROJECT_ID,
+    storageBucket: process.env.STORAGE_BUCKET,
+    messagingSenderId: process.env.MESSAGING_SENDER_ID,
+    appId: process.env.APP_ID,
+    measurementId: process.env.MEASUREMENT_ID
 };
 // Configure FirebaseUI.
 // export const uiConfig = {

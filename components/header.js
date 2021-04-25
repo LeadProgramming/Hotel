@@ -1,6 +1,22 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import fireApp from '../firebase_config';
 const Header = ({ children }) => {
+    const [status, setStatus] = useState(false);
+    const logout = () => {
+        fireApp.auth().signOut()
+    }
+    useEffect(() => {
+        fireApp.auth().onAuthStateChanged(function (user) {
+            if (user) {
+                setStatus(true);
+            } else {
+                setStatus(false);
+            }
+        });
+    }, [])
+
     return (
         <>
             <Head>
@@ -44,9 +60,16 @@ const Header = ({ children }) => {
                             </Link>
                         </li>
                         <li>
-                            <Link href="/signup">
-                                <a>Sign-up</a>
-                            </Link>
+                            {status ?
+                                <Link href="/rooms">
+                                    <a onClick={logout}> Logout </a>
+                                </Link>
+                                :
+                                <Link href="/login">
+                                    <a>Login</a>
+                                </Link>
+                            }
+
                         </li>
                         <li>
                             <Link href="/room-creator">

@@ -1,14 +1,15 @@
 import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
-import fireApp from "../firebase_config";
-import { checkingIn, setAvailable } from "../store/roomsSlice";
+import firebase from "../firebase_config";
+import { checkingIn } from "../store/checkinSlice";
+import { setAvailable } from "../store/roomsSlice";
 
 const Rooms = ({ listings }) => {
     const router = useRouter();
     const dispatch = useDispatch();
 
     const promptCheckinPage = (payload) => {
-        fireApp.auth().onAuthStateChanged((user) => {
+        firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 dispatch(checkingIn(payload));
                 router.push("/checkin");
@@ -19,9 +20,9 @@ const Rooms = ({ listings }) => {
         })
     }
     const promptSetAvailable = (payload) => {
-        console.log(payload);
-        dispatch(setAvailable(payload));
-        router.push("/rooms");
+        dispatch(setAvailable(payload)).then(() => {
+            router.push("/rooms");
+        });
     }
     return (
         <div className={"space-y-4"}>
@@ -71,7 +72,7 @@ const Rooms = ({ listings }) => {
                                 </td>
                             </tr>
                         )
-                    }) : <p>"No rooms available"</p>}
+                    }) : <p>No rooms available</p>}
                 </tbody>
             </table>
         </div >
@@ -79,19 +80,7 @@ const Rooms = ({ listings }) => {
 }
 export async function getServerSideProps() {
     let listings = [];
-    // if (query.type) {
-    //     await fireApp.firestore()
-    //         .collection("room")
-    //         .where("roomType", "==", query.type)
-    //         .where("roomStatus", "==", "available")
-    //         .get()
-    //         .then(queryData => {
-    //             queryData.forEach(i => {
-    //                 listings.push(i.data());
-    //             })
-    //         })
-    // }
-    await fireApp.firestore()
+    await firebase.firestore()
         .collection("room")
         .orderBy("roomNumber")
         .get()

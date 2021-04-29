@@ -1,11 +1,11 @@
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
-import fireApp from "../firebase_config";
+import firebase from "../firebase_config";
 const Signup = () => {
     const router = useRouter();
     const { register, handleSubmit, watch, errors } = useForm();
     const onSubmit = ({ email, password }) => {
-        fireApp.auth().createUserWithEmailAndPassword(email, password)
+        firebase.auth().createUserWithEmailAndPassword(email, password)
         router.push(`/signup-2`);
     };
     return (

@@ -10,23 +10,25 @@ const NewReservation = () => {
     const days = dayjs(watchFields.checkOutDate).diff(watchFields.checkInDate, 'day');
     const dispatch = useDispatch();
     const onSubmit = data => {
+        const checkInDate = dayjs(data.checkInDate).toString();
+        const checkOutDate = dayjs(data.checkOutDate).toString();
         data["days"] = days;
-        data.checkInDate = dayjs().format('MM/DD/YYYY');
-        data.checkOutDate = dayjs().format('MM/DD/YYYY');
+        data.checkInDate = checkInDate
+        data.checkOutDate = checkOutDate
         dispatch(getRoomsReservation(data));
-        router.push(`/reservation/rooms?type=${data.roomType}&days=${data.days}`)
+        router.push(`/reservation/rooms?type=${data.roomType}&start=${checkInDate}&days=${data.days}`)
     };
     return (
         <form onSubmit={handleSubmit(onSubmit)} className={"space-y-2 w-1/2 m-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"}>
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="checkInDate">
                 Check-in Date:
             </label>
-            <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="checkInDate" type="date" ref={register({ required: true, valueAsDate: true })} />
+            <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="checkInDate" type="date" min={dayjs().add(1, 'day').format('YYYY-MM-DD')} ref={register({ required: true, valueAsDate: true })} />
 
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="checkOutDate">
                 Check-Out Date:
             </label>
-            <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="checkOutDate" type="date" ref={register({ required: true, valueAsDate: true })} />
+            <input className="block w-full shadow border rounded py-2 px-3 text-gray-700 focus:outline-none" name="checkOutDate" type="date" min={dayjs(watchFields.checkInDate).add(2, 'day').format('YYYY-MM-DD')} ref={register({ required: true, valueAsDate: true })} />
 
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="roomType">
                 Room Type:

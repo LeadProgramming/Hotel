@@ -1,16 +1,17 @@
 import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
-import fireApp from "../../firebase_config";
+import firebase from "../../firebase_config";
 import { makeReservation } from "../../store/reservationSlice";
 
 const Rooms = ({ listings }) => {
     const router = useRouter();
     const dispatch = useDispatch();
     const promptMakeReservation = (payload) => {
-        fireApp.auth().onAuthStateChanged((user) => {
+        firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                dispatch(makeReservation(payload));
-                router.push("/reservation");
+                dispatch(makeReservation(payload)).then(() => {
+                    router.push("/reservation");
+                });
             }
             else {
                 router.push("/login");
@@ -27,7 +28,6 @@ const Rooms = ({ listings }) => {
                     <tr>
                         <th className={"px-8"}>Room #</th>
                         <th className={"px-8"}>Room Type</th>
-                        <th className={"px-8"}>Room Status</th>
                         <th className={"px-8"}>Daily Rate</th>
                         <th className={"px-8"}>Total Charge</th>
                     </tr>
@@ -41,10 +41,6 @@ const Rooms = ({ listings }) => {
                                 </td>
                                 <td className={"px-8 py-4"}>
                                     {i.roomType}
-                                </td>
-
-                                <td className={"px-8 py-4"}>
-                                    {i.roomStatus}
                                 </td>
                                 <td className={"px-8 py-4"}>
                                     $ {i.dailyRate}
@@ -60,7 +56,7 @@ const Rooms = ({ listings }) => {
                                 </td>
                             </tr>
                         )
-                    }) : <p>"No rooms available"</p>}
+                    }) : <p>No rooms available</p>}
                 </tbody>
             </table>
         </div >
@@ -69,10 +65,9 @@ const Rooms = ({ listings }) => {
 export async function getServerSideProps({ query }) {
     let listings = [];
     if (query.type) {
-        await fireApp.firestore()
+        await firebase.firestore()
             .collection("room")
             .where("roomType", "==", query.type)
-            .where("roomStatus", "==", "available")
             .get()
             .then(queryData => {
                 queryData.forEach(i => {

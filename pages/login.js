@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
-import fireApp from "../firebase_config";
+import firebase from "../firebase_config";
 const Signup = () => {
     const router = useRouter();
     const { register, handleSubmit, watch, errors, setError } = useForm();
 
     const onSubmit = ({ email, password }) => {
-        fireApp.auth().signInWithEmailAndPassword(email, password)
+        firebase.auth().signInWithEmailAndPassword(email, password)
             .then(() => {
                 router.push("/profile");
             })

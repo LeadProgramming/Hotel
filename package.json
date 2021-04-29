@@ -3,7 +3,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "export": "next export"
+    "export": "next export",
+    "emulator": "firebase emulators:start"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.1",
@@ -17,8 +18,8 @@
     "react-dom": "^17.0.2",
     "react-hook-form": "^6.15.5",
     "react-redux": "^7.2.3",
-    "redux-firestore": "^0.15.0",
-    "tailwindcss": "^2.0.4"
+    "tailwindcss": "^2.0.4",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "eslint": "7.2.0",

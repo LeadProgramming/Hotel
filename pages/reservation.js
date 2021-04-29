@@ -2,19 +2,25 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NewReservation from "../components/newReservation";
-import fireApp from "../firebase_config";
-import { removeReservation, setAddMode, setRemoveMode } from "../store/reservationSlice";
+import firebase from "../firebase_config";
+import { loadReservations, removeReservation, setAddMode, setRemoveMode } from "../store/reservationSlice";
 
-const Reservation = ({ reservations }) => {
+const Reservation = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const reservationStore = useSelector(state => state.reservation);
-  useEffect(() => {
-    fireApp.auth().onAuthStateChanged((user) => {
-      if (!user)
+  const { reservations, addMode, removeMode } = useSelector(state => state.reservation);
+
+  useEffect(async () => {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        dispatch(loadReservations(user.email));
+      }
+      else {
         router.push("/login");
+      }
     })
-  }, []);
+  }, [reservations]);
+
   const promptAddReservation = () => {
     dispatch(setAddMode());
   }
@@ -23,6 +29,10 @@ const Reservation = ({ reservations }) => {
   }
   const promptRemoveReservation = (payload) => {
     dispatch(removeReservation(payload));
+  }
+  const promptCheckin = (payload) => {
+    dispatch(removeReservation(payload));
+    router.push("/checkin");
   }
   return (
     <div className="space-y-4">
@@ -33,21 +43,21 @@ const Reservation = ({ reservations }) => {
         <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onClick={promptAddReservation}>Add</button>
         <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onClick={promptRemoveReservationBtn}>Remove</button>
       </div>
-      {reservationStore.addMode && <NewReservation />}
+      {addMode && <NewReservation />}
 
       <div className={"mt-8 text-center font-bold text-gray-700 text-xl "}>User's Reservations</div>
       <table className={"table-auto mx-8"}>
         <thead>
           <tr>
+            <th className={"px-4"}>Room #</th>
+            <th className={"px-4"}>Room Type</th>
+            <th className={"px-4"}>Date Reserved</th>
             <th className={"px-4"}>First Name </th>
             <th className={"px-4"}>Last Name</th>
-            <th className={"px-4"}>Initial Date</th>
             <th className={"px-4"}>Check-In</th>
             <th className={"px-4"}>Check-Out</th>
-            <th className={"px-4"}>Room Type</th>
-            <th className={"px-4"}>Room Status</th>
-            <th className={"px-4"}>Room #</th>
             <th className={"px-4"}>Daily Rate</th>
+            <th className={"px-4"}>Days</th>
             <th className={"px-4"}>Total Charge</th>
           </tr>
         </thead>
@@ -56,21 +66,24 @@ const Reservation = ({ reservations }) => {
             reservations?.length > 0 ? reservations.map(i => {
               return (
                 <tr>
+                  <td className={"px-8 py-4"}>{i.roomNumber}</td>
+                  <td className={"px-8 py-4"}>{i.roomType}</td>
+                  <td className={"px-8 py-4"}>{i.dateMade}</td>
                   <td className={"px-8 py-4"}>{i.firstName}</td>
                   <td className={"px-8 py-4"}>{i.lastName}</td>
-                  <td className={"px-8 py-4"}>{new Date(i.reservedDate).toDateString()}</td>
-                  <td className={"px-8 py-4"}>{new Date(i.checkInDate).toDateString()}</td>
-                  <td className={"px-8 py-4"}>{new Date(i.checkOutDate).toDateString()}</td>
-                  <td className={"px-8 py-4"}>{i.roomType}</td>
-                  <td className={"px-8 py-4"}>{i.roomStatus}</td>
-                  <td className={"px-8 py-4"}>{i.roomNumber}</td>
+                  <td className={"px-8 py-4"}>{i.checkInDate}</td>
+                  <td className={"px-8 py-4"}>{i.checkOutDate}</td>
                   <td className={"px-8 py-4"}>${i.dailyRate}</td>
+                  <td className={"px-8 py-4"}>{i.days}</td>
                   <td className={"px-8 py-4"}>${i.totalCharge}</td>
-                  <td className={"px-8 py-4"}>{reservationStore.removeMode &&
-                    <button className="bg-red-500 hover:bg-red-700 text-white font-bold px-4 rounded focus:outline-none focus:shadow-outline" onClick={() => promptRemoveReservation(i)}>-</button>}</td>
+                  <td className={"px-8 py-4"}>{removeMode ?
+                    <button className="bg-red-500 hover:bg-red-700 text-white font-bold px-4 rounded focus:outline-none focus:shadow-outline" onClick={() => promptRemoveReservation(i)}>-</button>
+                    :
+                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 rounded focus:outline-none focus:shadow-outline" onClick={() => promptCheckin(i)}>Check-in</button>}
+                  </td>
                 </tr>
               )
-            }) : <tr>No rooms to display</tr>
+            }) : <tr><td>No reservations</td></tr>
           }
         </tbody>
       </table>
@@ -78,19 +91,4 @@ const Reservation = ({ reservations }) => {
   )
 }
 
-export async function getServerSideProps({ query }) {
-  let reservations = [];
-  await fireApp.firestore()
-    .collection("reservation")
-    .orderBy("checkInDate")
-    .get()
-    .then(queryData => {
-      queryData.forEach(i => {
-        reservations.push(i.data());
-      })
-    })
-  return {
-    props: { reservations },
-  }
-}
 export default Reservation;

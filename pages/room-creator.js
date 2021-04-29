@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import fireApp from "../firebase_config";
+import firebase from "../firebase_config";
 const Signup = () => {
     const router = useRouter();
     const { register, handleSubmit, watch, errors, reset, setValue } = useForm();
@@ -17,7 +17,7 @@ const Signup = () => {
 
     const onSubmit = data => {
         data["electronics"] = electronics;
-        fireApp.firestore().collection('room').doc(data.roomNumber).set(data);
+        firebase.firestore().collection('room').doc(data.roomNumber).set(data);
         router.push(`/rooms`);
     };
     return (

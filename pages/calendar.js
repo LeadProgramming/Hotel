@@ -1,8 +1,19 @@
 import dayjs from "dayjs";
-import fireApp from "../firebase_config";
-const Calendar = ({ rooms }) => {
-    const month = dayjs().month() + 1;
-    const day = dayjs().date();
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import firebase from "../firebase_config";
+import { loadEntities } from "../store/calendarSlice";
+const Calendar = () => {
+    const dispatch = useDispatch();
+    const { checkins, reservations, rooms, calendar, week } = useSelector(state => state.calendar)
+    // const month = dayjs().month() + 1;
+    // const day = dayjs().date();
+    useEffect(() => {
+        firebase.auth().onAuthStateChanged(async (user) => {
+            await dispatch(loadEntities());
+        })
+    }, [])
+
     return (
         <div className={"space-y-4"}>
             <h1 className={"pt-8 pl-8 "}>
@@ -13,17 +24,9 @@ const Calendar = ({ rooms }) => {
                     <tr>
                         <th className={"px-8"}>Room #</th>
                         {
-                            [
-                                { month, day },
-                                { month, day: day + 1 },
-                                { month, day: day + 2 },
-                                { month, day: day + 3 },
-                                { month, day: day + 4 },
-                                { month, day: day + 5 },
-                                { month, day: day + 6 },
-                            ].map(i => {
+                            week.map(i => {
                                 return (
-                                    <th className={"px-8"}>{i.month}/{i.day}</th>
+                                    <th className={"px-8"}>{dayjs(i).format("MM/DD")}</th>
                                 )
                             })
                         }
@@ -36,7 +39,6 @@ const Calendar = ({ rooms }) => {
                                 <tr key={JSON.stringify(i)}>
                                     <td className={"px-8 py-4"}>{i.roomNumber}</td>
                                     {[false, false, false, false, false, false, false].map((i) => {
-
                                         return (!i ? <td className={"px-8 py-4"}>David</td> : <td className={"px-8 py-4"}></td>)
                                     })}
                                 </tr>
@@ -48,20 +50,5 @@ const Calendar = ({ rooms }) => {
         </div >
     )
 }
-export async function getServerSideProps({ query }) {
-    let rooms = [];
-    await fireApp.firestore()
-        .collection("room")
-        .orderBy("roomNumber")
-        .get()
-        .then(queryData => {
-            queryData.forEach(i => {
-                rooms.push(i.data());
-            })
-        })
-    return {
-        props: { rooms }
-    }
 
-}
 export default Calendar;

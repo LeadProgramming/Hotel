@@ -1,4 +1,7 @@
 import firebase from 'firebase';
+// import 'firebase/auth';
+// import 'firebase/firebase';
+// import 'firebase/storage';
 
 export const firebaseConfig = {
     apiKey: process.env.FIREBASE_API_KEY,
@@ -9,21 +12,12 @@ export const firebaseConfig = {
     appId: process.env.APP_ID,
     measurementId: process.env.MEASUREMENT_ID
 };
-// Configure FirebaseUI.
-// export const uiConfig = {
-//     // Popup signin flow rather than redirect flow.
-//     // signInFlow: 'popup',
-//     // Redirect to /signedIn after sign in is successful. Alternatively you can provide a callbacks.signInSuccess function.
-//     signInSuccessUrl: '/rooms',
-//     // We will display Google and Facebook as auth providers.
-//     signInOptions: [
-//         firebase.auth.EmailAuthProvider.PROVIDER_ID,
-//     ]
-// };
+
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-    // if (location.hostname === "localhost")
-    //     firebase.firestore().useEmulator("localhost", 8080);
+    // if (location.hostname === "localhost") {
+    //     firebase.firestore().useEmulator("http://localhost:8080");
+    //     firebase.auth().useEmulator("http://localhost:9099");
+    // }
 }
-const fireApp = firebase;
-export default fireApp;
+export default firebase;

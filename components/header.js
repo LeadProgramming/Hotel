@@ -1,14 +1,14 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import fireApp from '../firebase_config';
+import firebase from '../firebase_config';
 const Header = ({ children }) => {
     const [status, setStatus] = useState(false);
     const logout = () => {
-        fireApp.auth().signOut()
+        firebase.auth().signOut()
     }
     useEffect(() => {
-        fireApp.auth().onAuthStateChanged(function (user) {
+        firebase.auth().onAuthStateChanged(function (user) {
             if (user) {
                 setStatus(true);
             } else {
@@ -34,11 +34,11 @@ const Header = ({ children }) => {
                                 <a>Rooms</a>
                             </Link>
                         </li>
-                        <li>
+                        {/* <li>
                             <Link href="/calendar">
                                 <a>Calendar</a>
                             </Link>
-                        </li>
+                        </li> */}
                         <li>
                             <Link href="/reservation">
                                 <a>Reservation</a>

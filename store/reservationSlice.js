@@ -1,6 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import dayjs from "dayjs";
-import fireApp from "../firebase_config";
+import { v4 as uuidv4 } from 'uuid';
+import firebase from "../firebase_config";
 
 
 const initialState = {
@@ -10,12 +11,68 @@ const initialState = {
     checkOutDate: "",
     days: 0,
     roomType: "",
-
+    reservations: []
 }
+export const removeReservation = createAsyncThunk('reservation/removeReservation', async (payload) => {
+    await firebase.firestore()
+        .collection("reservation")
+        .doc(payload.id)
+        .delete()
+})
+export const loadReservations = createAsyncThunk('reservation/loadReservations', async (email) => {
+    let reservations = []
+    await firebase.firestore()
+        .collection("reservation")
+        .where("email", "==", email)
+        .get()
+        .then((queryData) => {
+            queryData.forEach((i) => {
+                reservations.push(i.data());
+            })
+        })
+    return reservations
+})
 
+export const makeReservation = createAsyncThunk('reservation/makeReservation', async (payload, thunkAPI) => {
+    await firebase.auth().onAuthStateChanged((user) => {
+        const reservationId = uuidv4();
+        const guestDocRef = firebase.firestore().collection('guest').doc(user.email);
+        const reservationDocRef = firebase.firestore().collection('reservation').doc(reservationId);
+        firebase.firestore().runTransaction((transaction) => {
+            return transaction.get(guestDocRef).then((guestDoc) => {
+                if (!guestDoc.exists) {
+                    throw "Document does not exists";
+                }
+                transaction.set(reservationDocRef, {
+                    id: reservationId,
+                    email: user.email,
+                    firstName: guestDoc.data().firstName,
+                    lastName: guestDoc.data().lastName,
+                    dateMade: dayjs().toString(),
+                    checkInDate: thunkAPI.getState().reservation.checkInDate,
+                    checkOutDate: thunkAPI.getState().reservation.checkOutDate,
+                    roomType: thunkAPI.getState().reservation.roomType,
+                    roomNumber: payload.roomNumber,
+                    dailyRate: payload.dailyRate,
+                    days: thunkAPI.getState().reservation.days,
+                    totalCharge: payload.totalCharge,
+                });
+            })
+        }).then(() => {
+            console.log("Transaction Completed.");
+        }).catch((e) => {
+            console.log(e, " : Transaction Failed.");
+        })
+    })
+})
 const reservationSlice = createSlice({
     name: 'reservation',
     initialState,
+    extraReducers: {
+        [loadReservations.fulfilled]: (state, action) => {
+            state.reservations = action.payload;
+        }
+    },
     reducers: {
         getRoomsReservation(state, action) {
             state.checkInDate = action.payload.checkInDate;
@@ -23,50 +80,15 @@ const reservationSlice = createSlice({
             state.roomType = action.payload.roomType;
             state.days = action.payload.days;
         },
-        makeReservation(state, action) {
-            fireApp.auth().onAuthStateChanged(user => {
-                const guestDocRef = fireApp.firestore().collection('guest').doc(user.email);
-                const reservationDocRef = fireApp.firestore().collection('reservation').doc(user.email);
-                const roomDocRef = fireApp.firestore().collection('room').doc(action.payload.roomNumber);
-                fireApp.firestore().runTransaction((transaction) => {
-                    return transaction.get(guestDocRef).then((guestDoc) => {
-                        if (!guestDoc.exists) {
-                            throw "Document does not exists";
-                        }
-                        transaction.set(reservationDocRef, {
-                            firstName: guestDoc.data().firstName,
-                            lastName: guestDoc.data().lastName,
-                            reservedDate: dayjs().format('MM/DD/YYYY'),
-                            checkInDate: state.checkInDate,
-                            checkOutDate: state.checkOutDate,
-                            roomType: state.roomType,
-                            roomStatus: "occupied",
-                            roomNumber: action.payload.roomNumber,
-                            dailyRate: action.payload.dailyRate,
-                            totalCharge: action.payload.totalCharge
-                        });
-                        transaction.update(roomDocRef, {
-                            roomStatus: "occupied",
-                        })
-                    })
-                }).then(() => {
-                    console.log("Transaction Completed.");
-                }).catch((e) => {
-                    console.log(e, " : Transaction Failed.");
-                })
-            })
-        },
-        removeReservation(state, action) {
 
-        },
         setAddMode(state) {
             state.addMode = !state.addMode;
         },
-        setRemoveMode(state, action) {
+        setRemoveMode(state) {
             state.removeMode = !state.removeMode;
         },
-    }
+    },
 })
 
-export const { getRoomsReservation, makeReservation, removeReservation, setAddMode, setRemoveMode } = reservationSlice.actions;
+export const { getRoomsReservation, setAddMode, setRemoveMode } = reservationSlice.actions;
 export default reservationSlice.reducer;

@@ -1,17 +1,17 @@
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
-import fireApp from "../firebase_config";
+import firebase from "../firebase_config";
 const Signup = () => {
     const router = useRouter();
     const { register, handleSubmit, watch, errors } = useForm();
 
     const onSubmit = ({ profilePic, firstName, lastName, phone, address, email, driverId, carId }) => {
-        fireApp.auth().onAuthStateChanged(user => {
+        firebase.auth().onAuthStateChanged(user => {
             if (user) {
-                const storageRef = fireApp.storage().ref();
+                const storageRef = firebase.storage().ref();
                 const uploadTask = storageRef.child(`images/${profilePic.name}`)
                 uploadTask.put(profilePic);
-                fireApp.firestore().collection('guest').doc(user.email).set({
+                firebase.firestore().collection('guest').doc(user.email).set({
                     imgName: profilePic.item(0).name,
                     firstName,
                     lastName,

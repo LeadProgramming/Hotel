@@ -1,8 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import firebase from "../firebase_config";
-const initialState = {
-    payMode: false
-};
+const initialState = {};
 export const loadCurrentStay = createAsyncThunk('currentStay/loadCurrentStay', async ({ email }) => {
     let checkin = {};
     let firstName = "";
@@ -49,6 +47,7 @@ export const payBalance = createAsyncThunk('currenStay/payBalance', async ({ pay
         .update({
             balance: balance - payment
         })
+    state.balance -= payment;
 })
 
 const currentStaySlice = createSlice({
@@ -61,10 +60,8 @@ const currentStaySlice = createSlice({
         }
     },
     reducers: {
-        promptPaying(state, action) {
-            state.payMode = !state.payMode;
-        }
+
     }
 })
-export const { promptPaying } = currentStaySlice.actions;
+export const { } = currentStaySlice.actions;
 export default currentStaySlice.reducer;

@@ -34,11 +34,11 @@ const Header = ({ children }) => {
                                 <a>Rooms</a>
                             </Link>
                         </li>
-                        {/* <li>
+                        <li>
                             <Link href="/calendar">
                                 <a>Calendar</a>
                             </Link>
-                        </li> */}
+                        </li>
                         <li>
                             <Link href="/reservation">
                                 <a>Reservation</a>

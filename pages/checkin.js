@@ -14,6 +14,7 @@ const Checkin = () => {
     const watchPayment = watch("payment")
     const [days, setDays] = useState(0);
     const [totalCharge, setTotalCharge] = useState(0);
+    console.log(watchPayment);
     useEffect(() => {
         setTotalCharge(dailyRate * days);
     }, [days]);
